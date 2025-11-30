@@ -11,11 +11,18 @@ from .models import (
     User, Student, Subject, Schedule, Enrollment, 
     EnrolledSubject, FeeItem, Assessment, AssessmentItem, Payment
 )
+from .erd_models import (
+    StudentInfo, Faculty, College, Programs, ClassSubjects,
+    ClassOfferings, Schedule as ERDSchedule, StudentSubjects, Rooms
+)
 from .serializers import (
     UserSerializer, RegisterSerializer, LoginSerializer,
     StudentSerializer, SubjectSerializer, ScheduleSerializer,
     EnrollmentSerializer, EnrolledSubjectSerializer,
-    FeeItemSerializer, AssessmentSerializer, AssessmentItemSerializer, PaymentSerializer
+    FeeItemSerializer, AssessmentSerializer, AssessmentItemSerializer, PaymentSerializer,
+    StudentInfoSerializer, FacultySerializer, CollegeSerializer, ProgramsSerializer,
+    ClassSubjectsSerializer, ClassOfferingsSerializer, ERDScheduleSerializer,
+    StudentSubjectsSerializer, RoomsSerializer
 )
 
 
@@ -371,4 +378,107 @@ class FeeItemViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(category=category)
         
         return queryset
+
+
+# --- ERD VIEWSETS & Functional Stubs ---
+
+class StudentInfoViewSet(viewsets.ModelViewSet):
+    queryset = StudentInfo.objects.all()
+    serializer_class = StudentInfoSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def register(self, request):
+        base_year = timezone.now().strftime('%Y')
+        seq = StudentInfo.objects.count() + 1
+        generated_id = f"{base_year}-{seq:05d}"
+        data = request.data.copy()
+        data.setdefault('student_id', generated_id)
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'Student registered', 'student': serializer.data})
+
+
+class FacultyViewSet(viewsets.ModelViewSet):
+    queryset = Faculty.objects.all()
+    serializer_class = FacultySerializer
+    permission_classes = [IsAuthenticated]
+
+
+class CollegeViewSet(viewsets.ModelViewSet):
+    queryset = College.objects.all()
+    serializer_class = CollegeSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ProgramsViewSet(viewsets.ModelViewSet):
+    queryset = Programs.objects.all()
+    serializer_class = ProgramsSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ClassSubjectsViewSet(viewsets.ModelViewSet):
+    queryset = ClassSubjects.objects.all()
+    serializer_class = ClassSubjectsSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ClassOfferingsViewSet(viewsets.ModelViewSet):
+    queryset = ClassOfferings.objects.all()
+    serializer_class = ClassOfferingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['get'])
+    def schedules(self, request, pk=None):
+        schedules = ERDSchedule.objects.all()
+        return Response(ERDScheduleSerializer(schedules, many=True).data)
+
+
+class ERDScheduleViewSet(viewsets.ModelViewSet):
+    queryset = ERDSchedule.objects.all()
+    serializer_class = ERDScheduleSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def conflict_check(self, request):
+        schedule_ids = request.data.get('schedule_ids', [])
+        return Response({'conflicts': []})
+
+
+class StudentSubjectsViewSet(viewsets.ModelViewSet):
+    queryset = StudentSubjects.objects.all()
+    serializer_class = StudentSubjectsSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def enroll(self, request):
+        subject_ids = request.data.get('subject_ids', [])
+        return Response({'message': 'Enrollment submitted', 'subjects': subject_ids})
+
+
+class RoomsViewSet(viewsets.ModelViewSet):
+    queryset = Rooms.objects.all()
+    serializer_class = RoomsSerializer
+    permission_classes = [IsAuthenticated]
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def tuition_assessment_view(request):
+    subject_ids = request.data.get('subject_ids', [])
+    unit_rate = 500
+    units = len(subject_ids) * 3
+    tuition = units * unit_rate
+    misc = tuition * 0.1
+    total = tuition + misc
+    return Response({'units': units, 'tuition_fee': tuition, 'misc_fee': misc, 'total_amount': total})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def payment_post_view(request):
+    amount = request.data.get('amount')
+    reference = request.data.get('reference')
+    return Response({'message': 'Payment recorded (stub)', 'amount': amount, 'reference': reference})
 

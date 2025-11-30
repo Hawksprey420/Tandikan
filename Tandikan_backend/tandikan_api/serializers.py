@@ -4,6 +4,10 @@ from .models import (
     User, Student, Subject, Schedule, Enrollment, 
     EnrolledSubject, FeeItem, Assessment, AssessmentItem, Payment
 )
+from .erd_models import (
+    StudentInfo, Faculty, College, Programs, ClassSubjects,
+    ClassOfferings, Schedule as ERDSchedule, StudentSubjects, Rooms
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -239,3 +243,59 @@ class PaymentSerializer(serializers.ModelSerializer):
         if obj.received_by:
             return f"{obj.received_by.first_name} {obj.received_by.last_name}"
         return None
+
+
+# --- ERD SERIALIZERS (Skeleton placeholders) ---
+
+class StudentInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentInfo
+        fields = ['id', 'student_id']
+
+
+class FacultySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faculty
+        fields = ['id']
+
+
+class CollegeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = College
+        fields = ['id']
+
+
+class ProgramsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Programs
+        fields = ['id']
+
+
+class ClassSubjectsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClassSubjects
+        fields = ['id']
+
+
+class ClassOfferingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClassOfferings
+        fields = ['id']
+
+
+class ERDScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ERDSchedule
+        fields = ['id']
+
+
+class StudentSubjectsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentSubjects
+        fields = ['id']
+
+
+class RoomsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rooms
+        fields = ['id']
